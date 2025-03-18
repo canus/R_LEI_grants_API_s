@@ -1,0 +1,252 @@
+---
+title: "R Notebook 2025: NWOpen-API"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: TRUE
+
+---
+
+
+# Introduction
+De Nederlandse organisatie voor Wetenschappelijk Onderzoek (NWO) projectendatabank raadplegen via de NWOpen API om de projecten waar LEI aan is verbonden uit de selectie die beschikbaar is vanuit de projectendatabank (https://www.nwo.nl/projecten). De projectendatabank interface gaat terug tot 1993 terug, maar lijkt in het begin onvolledig. Informatie over de data selectie via de API staat onder data.
+
+ZonMW heeft een separate projectendatabank via: https://projecten.zonmw.nl/nl
+
+Voor meer informatie over de API van NWO zie het PDF-bestand "NWOpen-API" via: https://www.nwo.nl/gebruik-nwopen-api
+
+
+# Setup
+
+
+## Set environment
+
+```{r, WORK ENVIORMENT, echo = FALSE, eval = FALSE}
+
+## Set environment
+
+# Set workenviorment (Mac)
+#  knitr::opts_knit$set(root.dir = normalizePath("~/Documents/RStudio"))
+
+# Set workenviorment (Windows)
+#  knitr::opts_knit$set(root.dir = normalizePath("~/RStudio"))
+
+```
+
+
+## Load packages
+
+```{r, PACKAGES, echo = TRUE, eval = TRUE}
+
+# Packages needed
+  package.list <- c("reprex", "tidyverse", "rmarkdown", 
+                    "httr2", "data.table", "jsonlite", "vctrs", "openxlsx2")
+
+
+# Install missing packages 
+  new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
+  if(length(new.packages)) install.packages(new.packages)
+
+  
+# Load packages needed (and subdue)
+  invisible(lapply(package.list, library, character.only = TRUE))
+
+```
+
+
+# Data
+De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie wordt ook gepubliceerd via NWO’s projectendatabank op de website: https://www.nwo.nl/projecten . De data heeft de volgende beperkingen:
+
+* API data is incompleet: 
+  + De API levert informatie die wordt geleverd bevat lopende projecten en projecten die maximaal 5 jaar geleden zijn afgesloten. (niet de volledige projectendatabank die teruggaat tot ± 1993; beginjaren zijn onvolledig).
+  + projecten die door de projectleider met “niet publiceren” zijn aangemerkt, of projecten waarvan de call door NWO als “niet publiceren” is aangemerkt worden niet door de API zullen worden teruggegeven.
+* project_id ≠ Grant_id (2024)
+  + Vanaf augustus 2024 krijgen NWO projecten een nieuwe Grant ID is een persistent identifier die linkt naar de projectpagina op de website van NWO met informatie over de subsidie met de vaste prefix: https: //doi.org/10.61686/… .
+  + NWO vraagt de projectleider de grant ID te vermelden bij alle publicaties of preprints, data en software.
+* Op dit moment lopen er diverse projecten binnen NWO om persistent identifiers toe te voegen. Er wordt gewerkt aan het toevoegen van DOI, ORCID en ROR. De NWOpen-API is hier op voorbereid en zal de informatie teruggeven wanneer de systemen van NWO met de betreffende identifiers zijn verrijkt.
+* beperking van 100 projecten per query
+  + 1993-01-01 t/m 2024-12-31 data begint in 2013.
+
+
+## Get data from NWOpen-API
+
+
+### API base URL
+
+```{r, API URL, echo = TRUE, eval = TRUE}
+
+# URL NWOpen-API
+  NWOpen_base_url <-"https://nwopen-api.nwo.nl/NWOpen-API/api/Projects"
+
+```
+
+
+
+### API query: Iterative
+
+```{r, API ITERATIVE & PROSSESING RESPONSE, echo = TRUE, eval = TRUE}
+
+# Iterative request and responce prossesing
+# the date is given as ISO 8601 extended format YYYY-MM-DD
+NWO_responses <-
+request(NWOpen_base_url) |>
+  req_url_query(
+      rs_start_date = "2020-01-01",
+      re_start_date = "2020-12-31",
+      organisation = "\"Universiteit Leiden\"",
+      per_page = 10     # reduce repsone length for testing
+    ) |> 
+  req_perform_iterative(
+  next_req = iterate_with_offset(
+    "page",
+    resp_pages = function(resp) resp_body_json(resp)$meta$pages
+  ),
+    max_reqs = 3 # limit max requests for testing
+#    max_reqs = Inf 
+) |>
+resps_successes() |>
+  resps_data(\(resp) resp_body_json(resp)$projects)
+
+#Convert NWO_responses to JSON
+NWO_responses_JSON <- toJSON(NWO_responses)
+
+```
+
+
+### Processing PROJECTS
+
+```{r, PROSSESING PROJECTS, echo = TRUE, eval = TRUE}
+
+#Convert NWO_responses from JSON to data frame
+  NWO_data_projectendatabank <- fromJSON(NWO_responses_JSON)
+
+
+
+
+## Personenbestanden
+  
+# Select project_members and project_id
+  NWO_projects_members_all <- 
+    select(NWO_data_projectendatabank, 
+           project_id,
+           project_members,
+           )
+
+
+# Unnest project_members from NWO_projects_members_all
+  NWO_data_personen <- NWO_projects_members_all %>% unnest(project_members)
+
+
+# Filters NWO_projects_members_all: role = "Main Applicant"
+  NWO_members_main.applicant <- subset(NWO_data_personen, role == "Main Applicant") # ≠ # projects
+  NWO_members_Project.leader <- subset(NWO_data_personen, role == "Project leader") # still lose 1
+  NWO_members_Researcher <- subset(NWO_data_personen, role == "Researcher") # solves problem
+
+
+# Combining previous filters (order matters)
+  NWO_members_sort <- do.call("rbind", list(NWO_members_main.applicant, NWO_members_Project.leader, NWO_members_Researcher))  
+
+  
+# Deduplicate filters (zodat uit LEI_output_enkel deel het fdr deel wordt verwijderd):          
+  NWO_data_personen_hoofdaanvrager <- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]
+
+
+
+
+
+## Projectenbestand
+
+# Select Project information
+  NWO_projecten <- select(NWO_data_projectendatabank,
+                          project_id, # is not = grant id
+                          title,
+                          funding_scheme_id,
+                          funding_scheme,
+                          department,
+                          sub_department,
+                          start_date,
+                          end_date,
+                          summary_nl,
+                          summary_en,
+#                          grant_id, # as of ± september 2024 (testing doesn't have this column)
+                          )
+
+
+# Conjoining "NWO_projecten" and "NWO_data_personen_hoofdaanvrager" by project_id
+  NWO_data_projecten <- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = "project_id")
+
+  
+
+  
+  
+# Create DATA_GRANTS directory if not there
+  ifelse(!dir.exists("DATA_GRANTS"), dir.create("DATA_GRANTS"), "Folder exists already")
+  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_response")), dir.create(file.path("DATA_GRANTS", "NWO_response")), "Folder exists already")
+  
+  
+# Save basic files
+  write_xlsx(NWO_data_projecten, "DATA_GRANTS/NWO_response/NWO_LEI_projecten.xlsx")
+  write_xlsx(NWO_data_personen, "DATA_GRANTS/NWO_response/NWO_LEI_projecten_personen.xlsx")
+  write_xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_response/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx")
+
+```
+
+
+
+### Processing PROJECTS: Products
+
+```{r, PUBLICATIES, echo = TRUE, eval = TRUE}
+
+## onderzoeksoutput
+
+# Select project_members and project_id
+  NWO_projects_products <- 
+    select(NWO_data_projectendatabank, 
+           project_id,
+           products,
+           )
+
+
+# Unnest products from NWO_projects_products and authors
+  NWO_output <- NWO_projects_products %>% unnest(products)
+  NWO_data_onderzoeksoutput <- NWO_output %>% unnest(authors)
+  
+
+# Select Product information without author information
+  NWO_data_output <- select(NWO_output,
+                          project_id,
+                          type,
+                          title,
+                          sub_title,
+                          year,
+                          url_open_access, # = doi as url
+                          journal_title,
+                          isbn,
+                          )
+
+
+# Select Product information with author information  
+  NWO_data_onderzoeksoutput <- select(NWO_data_onderzoeksoutput,
+                          project_id,
+                          type,
+                          title,
+                          sub_title,
+                          year,
+                          url_open_access, # = doi as url
+                          journal_title,
+                          isbn,
+                          last_name,
+                          initials,
+                          first_name,
+                          prefix,
+#                          dai, # testing doesn't have this column
+                          )
+
+
+
+# Save basic files
+  write_xlsx(NWO_data_output, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput.xlsx")  
+  write_xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
+
+```
