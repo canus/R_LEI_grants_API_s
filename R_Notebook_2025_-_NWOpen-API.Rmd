@@ -150,19 +150,19 @@ The r code below will create a file with the 'Hoofdaanvragers'. This file contai
 
 # Create DATA_GRANTS directory if not there
   ifelse(!dir.exists("DATA_GRANTS"), dir.create("DATA_GRANTS"), "Folder exists already")
-  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_PROJECT_MEMBERS")), dir.create(file.path("DATA_GRANTS", "NWO_PROJECT_MEMBERS")), "Folder exists already")
+  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_PROJECTS_MEMBERS")), dir.create(file.path("DATA_GRANTS", "NWO_PROJECTS_MEMBERS")), "Folder exists already")
 
 
 # Save: create excel files with the project member
-  write.xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx")
-  write.xlsx(NWO_data_personen, "DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen.xlsx")
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx")
+  write.xlsx(NWO_data_personen, "DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen.xlsx")
 
 
 ```
 
 
 
-## PROJECTS: projects
+## PROJECTS: projects (grants)
 The r code below will create a file with the project information and the 'hoofdaanvrager'.
 
 ```{r, PROSSESING PROJECTS: PROJECTS, echo = TRUE, eval = TRUE}

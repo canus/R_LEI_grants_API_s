@@ -1628,9 +1628,10 @@ request(NWOpen_base_url) |&gt;
 ) |&gt;
 resps_successes() |&gt;
   resps_data(\(resp) resp_body_json(resp)$projects)</code></pre>
-<pre><code>## ⠙ Iterating 1 done (0.16/s) | 6.1sIterating ■■■■■■■■■■■ 33% | ETA: 27sIterating
-## ■■■■■■■■■■■■■■■■ 50% | ETA: 22sIterating ■■■■■■■■■■■■■■■■■■■■■ 67% | ETA:
-## 16sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% | ETA: 9s</code></pre>
+<pre><code>## ⠙ Iterating 1 done (0.18/s) | 5.5sIterating ■■■■■■ 17% | ETA: 29sIterating
+## ■■■■■■■■■■■ 33% | ETA: 27sIterating ■■■■■■■■■■■■■■■■ 50% | ETA: 23sIterating
+## ■■■■■■■■■■■■■■■■■■■■■ 67% | ETA: 16sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% |
+## ETA: 9s</code></pre>
 <pre class="r"><code>#Convert NWO_responses to JSON (JavaScript Object Notation)
 NWO_responses_JSON &lt;- toJSON(NWO_responses)
 
@@ -1681,14 +1682,14 @@ members related to the project.</p>
 # Create DATA_GRANTS directory if not there
   ifelse(!dir.exists(&quot;DATA_GRANTS&quot;), dir.create(&quot;DATA_GRANTS&quot;), &quot;Folder exists already&quot;)</code></pre>
 <pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
-<pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECT_MEMBERS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECT_MEMBERS&quot;)), &quot;Folder exists already&quot;)</code></pre>
+<pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS_MEMBERS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS_MEMBERS&quot;)), &quot;Folder exists already&quot;)</code></pre>
 <pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
 <pre class="r"><code># Save: create excel files with the project member
-  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;)
-  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen.xlsx&quot;)</code></pre>
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;)
+  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen.xlsx&quot;)</code></pre>
 </div>
-<div id="projects-projects" class="section level2">
-<h2>PROJECTS: projects</h2>
+<div id="projects-projects-grants" class="section level2">
+<h2>PROJECTS: projects (grants)</h2>
 <p>The r code below will create a file with the project information and
 the ‘hoofdaanvrager’.</p>
 <pre class="r"><code>## Projectenbestand
