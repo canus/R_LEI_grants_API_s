@@ -114,7 +114,7 @@ NWO_responses_JSON <- toJSON(NWO_responses)
 
 # Processing Data
 
-## PROJECT: members
+## PROJECTS: members
 The r code below will create a file with the 'Hoofdaanvragers'. This file contains 'Main Applicant' (if that role was not available it contains the 'Project leader', if both are not available in the data it contains 'Researcher'). A second file will also be produced with all members related to the project.
 
 ```{r, PROSSESING PROJECTS: MEMBERS, echo = TRUE, eval = TRUE}
