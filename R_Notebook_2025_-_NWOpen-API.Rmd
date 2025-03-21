@@ -10,6 +10,8 @@ output:
 
 
 # Introduction
+This r notebook can retrieve the grant information from NWO (Nederlandse organisatie voor Wetenschappelijk Onderzoek) between 2 specific dates from an organisation (in this case 'Universiteit Leiden') using their API. The output will be multiple Excel files based on your query.
+
 De Nederlandse organisatie voor Wetenschappelijk Onderzoek (NWO) projectendatabank raadplegen via de NWOpen API om de projecten waar LEI aan is verbonden uit de selectie die beschikbaar is vanuit de projectendatabank (https://www.nwo.nl/projecten). De projectendatabank interface gaat terug tot 1993 terug, maar lijkt in het begin onvolledig. Informatie over de data selectie via de API staat onder data.
 
 ZonMW heeft een separate projectendatabank via: https://projecten.zonmw.nl/nl
@@ -20,28 +22,13 @@ Voor meer informatie over de API van NWO zie het PDF-bestand "NWOpen-API" via: h
 # Setup
 
 
-## Set environment
-
-```{r, WORK ENVIORMENT, echo = FALSE, eval = FALSE}
-
-## Set environment
-
-# Set workenviorment (Mac)
-#  knitr::opts_knit$set(root.dir = normalizePath("~/Documents/RStudio"))
-
-# Set workenviorment (Windows)
-#  knitr::opts_knit$set(root.dir = normalizePath("~/RStudio"))
-
-```
-
-
 ## Load packages
 
 ```{r, PACKAGES, echo = TRUE, eval = TRUE}
 
 # Packages needed
-  package.list <- c("reprex", "tidyverse", "rmarkdown", 
-                    "httr2", "data.table", "jsonlite", "vctrs", "openxlsx2")
+  package.list <- c("conflicted", "reprex", "tidyverse", "rmarkdown", 
+                    "httr2", "data.table", "jsonlite", "vctrs", "openxlsx")
 
 
 # Install missing packages 
@@ -52,7 +39,9 @@ Voor meer informatie over de API van NWO zie het PDF-bestand "NWOpen-API" via: h
 # Load packages needed (and subdue)
   invisible(lapply(package.list, library, character.only = TRUE))
 
+
 ```
+
 
 
 # Data
@@ -72,12 +61,14 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
 ## Get data from NWOpen-API
 
 
+
 ### API base URL
 
 ```{r, API URL, echo = TRUE, eval = TRUE}
 
 # URL NWOpen-API
   NWOpen_base_url <-"https://nwopen-api.nwo.nl/NWOpen-API/api/Projects"
+
 
 ```
 
@@ -93,38 +84,40 @@ NWO_responses <-
 request(NWOpen_base_url) |>
   req_url_query(
       rs_start_date = "2020-01-01",
-      re_start_date = "2020-12-31",
+      re_start_date = "2024-12-31",
       organisation = "\"Universiteit Leiden\"",
-      per_page = 10     # reduce repsone length for testing
+#      per_page = 10     # reduce repsone length for testing (in combination with max_reqs)
     ) |> 
   req_perform_iterative(
   next_req = iterate_with_offset(
     "page",
     resp_pages = function(resp) resp_body_json(resp)$meta$pages
   ),
-    max_reqs = 3 # limit max requests for testing
-#    max_reqs = Inf 
+    max_reqs = Inf # use for example max_reqs = 3 if you want to limit your maximum requests for testing
 ) |>
 resps_successes() |>
   resps_data(\(resp) resp_body_json(resp)$projects)
 
-#Convert NWO_responses to JSON
+
+
+#Convert NWO_responses to JSON (JavaScript Object Notation)
 NWO_responses_JSON <- toJSON(NWO_responses)
 
-```
-
-
-### Processing PROJECTS
-
-```{r, PROSSESING PROJECTS, echo = TRUE, eval = TRUE}
 
 #Convert NWO_responses from JSON to data frame
   NWO_data_projectendatabank <- fromJSON(NWO_responses_JSON)
 
 
+```
 
 
-## Personenbestanden
+
+### Processing PROJECT: members
+The r code below will create a file with the 'Hoofdaanvragers'. This file contains 'Main Applicant' (if that role was not available it contains the 'Project leader', if both are not available in the data it contains 'Researcher'). A second file will also be produced with all members related to the project.
+
+```{r, PROSSESING PROJECTS: MEMBERS, echo = TRUE, eval = TRUE}
+
+## Projectmembers (Personenbestanden)
   
 # Select project_members and project_id
   NWO_projects_members_all <- 
@@ -147,13 +140,30 @@ NWO_responses_JSON <- toJSON(NWO_responses)
 # Combining previous filters (order matters)
   NWO_members_sort <- do.call("rbind", list(NWO_members_main.applicant, NWO_members_Project.leader, NWO_members_Researcher))  
 
-  
+
 # Deduplicate filters (zodat uit LEI_output_enkel deel het fdr deel wordt verwijderd):          
   NWO_data_personen_hoofdaanvrager <- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]
 
 
 
+# Create DATA_GRANTS directory if not there
+  ifelse(!dir.exists("DATA_GRANTS"), dir.create("DATA_GRANTS"), "Folder exists already")
+  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_PROJECT_MEMBERS")), dir.create(file.path("DATA_GRANTS", "NWO_PROJECT_MEMBERS")), "Folder exists already")
 
+
+# Save: create excel files with the project member
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx")
+  write.xlsx(NWO_data_personen, "DATA_GRANTS/NWO_PROJECT_MEMBERS/NWO_LEI_projecten_personen.xlsx")
+
+
+```
+
+
+
+### Processing PROJECTS: projects
+The r code below will create a file with the project information and the 'hoofdaanvrager'.
+
+```{r, PUBLICATIES, echo = TRUE, eval = TRUE}
 
 ## Projectenbestand
 
@@ -169,32 +179,28 @@ NWO_responses_JSON <- toJSON(NWO_responses)
                           end_date,
                           summary_nl,
                           summary_en,
-#                          grant_id, # as of ± september 2024 (testing doesn't have this column)
+                          grant_id, # as of ± september 2024 (if the test falls outside the scope the data will not contain this column)
                           )
 
 
 # Conjoining "NWO_projecten" and "NWO_data_personen_hoofdaanvrager" by project_id
   NWO_data_projecten <- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = "project_id")
 
-  
 
-  
-  
+
 # Create DATA_GRANTS directory if not there
-  ifelse(!dir.exists("DATA_GRANTS"), dir.create("DATA_GRANTS"), "Folder exists already")
-  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_response")), dir.create(file.path("DATA_GRANTS", "NWO_response")), "Folder exists already")
-  
-  
-# Save basic files
-  write_xlsx(NWO_data_projecten, "DATA_GRANTS/NWO_response/NWO_LEI_projecten.xlsx")
-  write_xlsx(NWO_data_personen, "DATA_GRANTS/NWO_response/NWO_LEI_projecten_personen.xlsx")
-  write_xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_response/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx")
+  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_PROJECTS")), dir.create(file.path("DATA_GRANTS", "NWO_PROJECTS")), "Folder exists already")
+
+# Save: create projects file
+  write.xlsx(NWO_data_projecten, "DATA_GRANTS/NWO_PROJECTS/NWO_LEI_projecten.xlsx")
+
 
 ```
 
 
 
 ### Processing PROJECTS: Products
+The r code below will create a file with the resarch output (products)and the research output with all authors in the same folder as the project information.
 
 ```{r, PUBLICATIES, echo = TRUE, eval = TRUE}
 
@@ -240,13 +246,14 @@ NWO_responses_JSON <- toJSON(NWO_responses)
                           initials,
                           first_name,
                           prefix,
-#                          dai, # testing doesn't have this column
+                          dai, # (depending on the scope of the query the data will not contain this column)
                           )
 
 
+  
+# Save: create output (product) files
+  write.xlsx(NWO_data_output, "DATA_GRANTS/NWO_PROJECTS/NWO_LEI_onderzoeksoutput.xlsx")  
+  write.xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_PROJECTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
 
-# Save basic files
-  write_xlsx(NWO_data_output, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput.xlsx")  
-  write_xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
 
 ```
