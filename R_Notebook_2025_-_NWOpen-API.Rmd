@@ -112,7 +112,9 @@ NWO_responses_JSON <- toJSON(NWO_responses)
 
 
 
-### Processing PROJECT: members
+# Processing Data
+
+## PROJECT: members
 The r code below will create a file with the 'Hoofdaanvragers'. This file contains 'Main Applicant' (if that role was not available it contains the 'Project leader', if both are not available in the data it contains 'Researcher'). A second file will also be produced with all members related to the project.
 
 ```{r, PROSSESING PROJECTS: MEMBERS, echo = TRUE, eval = TRUE}
@@ -160,10 +162,10 @@ The r code below will create a file with the 'Hoofdaanvragers'. This file contai
 
 
 
-### Processing PROJECTS: projects
+## PROJECTS: projects
 The r code below will create a file with the project information and the 'hoofdaanvrager'.
 
-```{r, PUBLICATIES, echo = TRUE, eval = TRUE}
+```{r, PROSSESING PROJECTS: PROJECTS, echo = TRUE, eval = TRUE}
 
 ## Projectenbestand
 
@@ -199,10 +201,10 @@ The r code below will create a file with the project information and the 'hoofda
 
 
 
-### Processing PROJECTS: Products
+## PROJECTS: products
 The r code below will create a file with the resarch output (products)and the research output with all authors in the same folder as the project information.
 
-```{r, PUBLICATIES, echo = TRUE, eval = TRUE}
+```{r, PROSSESING PROJECTS: PRODUCTS, echo = TRUE, eval = TRUE}
 
 ## onderzoeksoutput
 
@@ -257,3 +259,6 @@ The r code below will create a file with the resarch output (products)and the re
 
 
 ```
+
+
+
