@@ -6,6 +6,6 @@ R project which aims to retrieve grant information via r (RStudio) from various 
 
 - Nog te doen:
 
-- EU: 
+- EU: Bij voorkeur alles, maar minimaal FP7 e.v. 
 
 - ZonMw: ZonMw is een financieringsorganisatie van innovatie en onderzoek in de gezondheidszorg, zoals bijvoorbeeld zorgevaluatie. ZonMw komt voort uit een samenwerkingsverband tussen de in 1998 opgerichte organisatie ZorgOnderzoek Nederland (Zon) en het gebied Medische wetenschappen (Mw) van de Nederlandse Organisatie voor Wetenschappelijk Onderzoek. Ze beheert circa negentig subsidieprogramma's op de gebieden Wetenschap en Innovatie; Preventie; Zorg en welzijn en; Kwaliteit en doelmatigheid. Haar voornaamste opdrachtgevers zijn het ministerie van Volksgezondheid, Welzijn en Sport en de Nederlandse Organisatie voor Wetenschappelijk Onderzoek. De organisatie is een zelfstandig bestuursorgaan.
