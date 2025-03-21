@@ -19,22 +19,6 @@ Voor meer informatie over de API van NWO zie het PDF-bestand "NWOpen-API" via: h
 
 # Setup
 
-
-## Set environment
-
-```{r, WORK ENVIORMENT, echo = FALSE, eval = FALSE}
-
-## Set environment
-
-# Set workenviorment (Mac)
-#  knitr::opts_knit$set(root.dir = normalizePath("~/Documents/RStudio"))
-
-# Set workenviorment (Windows)
-#  knitr::opts_knit$set(root.dir = normalizePath("~/RStudio"))
-
-```
-
-
 ## Load packages
 
 ```{r, PACKAGES, echo = TRUE, eval = TRUE}
@@ -249,4 +233,23 @@ NWO_responses_JSON <- toJSON(NWO_responses)
   write_xlsx(NWO_data_output, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput.xlsx")  
   write_xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_response/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
 
+
 ```
+
+
+## Notes
+
+```{r, Notes, echo = FALSE, eval = FALSE}
+
+# "reprex" = reproduces problem area's
+
+
+
+
+### maybe
+
+# rmv openxlsx2 package in favor of openxlsx (harmonise all)?
+
+
+```
+
