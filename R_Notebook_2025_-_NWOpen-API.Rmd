@@ -10,9 +10,9 @@ output:
 
 ### Abstract
 
-This r notebook can retrieve the grant information from NWO (Nederlandse organisatie voor Wetenschappelijk Onderzoek) between 2 specific dates from an organisation (in this example ‘Universiteit Leiden’) using their API. The API returns results in JSON format. The data schema is available via [this PDF file](https://www.nwo.nl/en/how-to-use-the-nwopen-api).
+This r notebook can retrieve the grant information from NWO (Nederlandse organisatie voor Wetenschappelijk Onderzoek) between 2 specific dates from an organisation (in this example ‘Universiteit Leiden’) using their API. The API returns results in JSON format. The data schema is available via the "Instruction for use of NWOpen-API" PDF on the [NWO website](https://www.nwo.nl/en/how-to-use-the-nwopen-api).
 
-The r notebook output will be multiple Excel files in a sub-folder of DATA_GRANTS based on your query.
+This r notebook output will be multiple Excel files in a sub-folder of DATA_GRANTS based on your query.
 
 
 
