@@ -1638,9 +1638,9 @@ zijn verrijkt.</li>
         ) |&gt;
     resps_successes() |&gt;
     resps_data(\(resp) resp_body_json(resp)$projects)</code></pre>
-<pre><code>## ⠙ Iterating 1 done (0.17/s) | 5.9sIterating ■■■■■■■■■■■ 33% | ETA: 27sIterating
+<pre><code>## ⠙ Iterating 1 done (0.18/s) | 5.5sIterating ■■■■■■■■■■■ 33% | ETA: 25sIterating
 ## ■■■■■■■■■■■■■■■■ 50% | ETA: 21sIterating ■■■■■■■■■■■■■■■■■■■■■ 67% | ETA:
-## 16sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% | ETA: 8s</code></pre>
+## 15sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% | ETA: 8s</code></pre>
 <pre class="r"><code># Convert NWO_responses to JSON (JavaScript Object Notation)
   NWO_responses_JSON &lt;- toJSON(NWO_responses)
 
@@ -1656,9 +1656,9 @@ zijn verrijkt.</li>
 <h2>Create directory</h2>
 <pre class="r"><code># Create Folders: creates a DATA_GRANTS directory (if not already present) with a sub-folder
   ifelse(!dir.exists(&quot;DATA_GRANTS&quot;), dir.create(&quot;DATA_GRANTS&quot;), &quot;Folder exists already&quot;)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
 <pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), &quot;Folder exists already&quot;)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
 </div>
 <div id="processing-the-response" class="section level2">
 <h2>Processing the response</h2>
@@ -1690,13 +1690,7 @@ zijn verrijkt.</li>
 
 
 # Deduplicate the combined file          
-  NWO_data_personen_hoofdaanvrager &lt;- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]
-
-
-
-# Save: create excel files with the project member (with project_id # column)
-  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;) # with only &quot;Main Applicant&quot;
-  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen.xlsx&quot;) # with all project_members</code></pre>
+  NWO_data_personen_hoofdaanvrager &lt;- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]</code></pre>
 <p><a id="projects"></a></p>
 </div>
 <div id="projects-projects-grants" class="section level3">
@@ -1720,13 +1714,7 @@ zijn verrijkt.</li>
 
 
 # Combining &quot;NWO_projecten&quot; and &quot;NWO_data_personen_hoofdaanvrager&quot; by project_id
-  NWO_data_projecten &lt;- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = &quot;project_id&quot;)
-
-
-
-# Save: create excel files with projects (grants)
-  write.xlsx(NWO_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten.xlsx&quot;)
-  write.xlsx(NWO_data_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_en_hoofdaanvrager.xlsx&quot;) # with &quot;Main Applicant&quot;</code></pre>
+  NWO_data_projecten &lt;- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = &quot;project_id&quot;)</code></pre>
 <p><a id="products"></a></p>
 </div>
 <div id="projects-products" class="section level3">
@@ -1779,14 +1767,41 @@ zijn verrijkt.</li>
 
 # List as character (see Notes below)
 #  NWO_data_onderzoeksoutput  &lt;- NWO_data_onderzoeksoutput |&gt; mutate(across(where(is.list),as.character))
-#  NWO_data_output  &lt;- NWO_data_output |&gt; mutate(across(where(is.list),as.character))
+#  NWO_data_output  &lt;- NWO_data_output |&gt; mutate(across(where(is.list),as.character))</code></pre>
+</div>
+</div>
+</div>
+<div id="save" class="section level1">
+<h1>Save</h1>
+<div id="create-directory-1" class="section level2">
+<h2>Create directory</h2>
+<pre class="r"><code># Create Folders: creates a DATA_GRANTS directory (if not already present) with a sub-folder
+  ifelse(!dir.exists(&quot;DATA_GRANTS&quot;), dir.create(&quot;DATA_GRANTS&quot;), &quot;Folder exists already&quot;)</code></pre>
+<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
+<pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), &quot;Folder exists already&quot;)</code></pre>
+<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
+</div>
+<div id="save-the-processed-responses" class="section level2">
+<h2>Save the processed responses</h2>
+<pre class="r"><code>### Save PROJECTS: members
 
-  
+# Save: create excel files with the project member (with project_id # column)
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;) # with only &quot;Main Applicant&quot;
+  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen.xlsx&quot;) # with all project_members
+
+
+### PROJECTS: projects (grants)
+
+# Save: create excel files with projects (grants)
+  write.xlsx(NWO_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten.xlsx&quot;)
+  write.xlsx(NWO_data_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_en_hoofdaanvrager.xlsx&quot;) # with &quot;Main Applicant&quot; 
+
+
+### PROJECTS: products  
 
 # Save: create excel files with products (research output) with project_id # column
   write.xlsx(NWO_data_output, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput.xlsx&quot;)  
-  write.xlsx(NWO_data_onderzoeksoutput, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx&quot;)  </code></pre>
-</div>
+  write.xlsx(NWO_data_onderzoeksoutput, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx&quot;)</code></pre>
 </div>
 </div>
 <div id="notes" class="section level1">

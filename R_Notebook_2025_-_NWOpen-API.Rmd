@@ -168,12 +168,6 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
 # Deduplicate the combined file          
   NWO_data_personen_hoofdaanvrager <- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]
 
-
-
-# Save: create excel files with the project member (with project_id # column)
-  write.xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx") # with only "Main Applicant"
-  write.xlsx(NWO_data_personen, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen.xlsx") # with all project_members
-
 ```
 <a id="projects"></a>
 
@@ -202,12 +196,6 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
 
 # Combining "NWO_projecten" and "NWO_data_personen_hoofdaanvrager" by project_id
   NWO_data_projecten <- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = "project_id")
-
-
-
-# Save: create excel files with projects (grants)
-  write.xlsx(NWO_projecten, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten.xlsx")
-  write.xlsx(NWO_data_projecten, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_en_hoofdaanvrager.xlsx") # with "Main Applicant"
 
 ```
 <a id="products"></a>
@@ -267,12 +255,49 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
 #  NWO_data_onderzoeksoutput  <- NWO_data_onderzoeksoutput |> mutate(across(where(is.list),as.character))
 #  NWO_data_output  <- NWO_data_output |> mutate(across(where(is.list),as.character))
 
-  
+```
+
+
+
+# Save
+
+
+## Create directory
+
+```{r, CREATE FOLDERS, echo = TRUE, eval = TRUE}
+
+# Create Folders: creates a DATA_GRANTS directory (if not already present) with a sub-folder
+  ifelse(!dir.exists("DATA_GRANTS"), dir.create("DATA_GRANTS"), "Folder exists already")
+  ifelse(!dir.exists(file.path("DATA_GRANTS", "NWO_GRANTS")), dir.create(file.path("DATA_GRANTS", "NWO_GRANTS")), "Folder exists already")
+
+```
+
+
+
+## Save the processed responses
+
+```{r, SAVE FILES, echo = TRUE, eval = TRUE}
+
+### Save PROJECTS: members
+
+# Save: create excel files with the project member (with project_id # column)
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx") # with only "Main Applicant"
+  write.xlsx(NWO_data_personen, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen.xlsx") # with all project_members
+
+
+### PROJECTS: projects (grants)
+
+# Save: create excel files with projects (grants)
+  write.xlsx(NWO_projecten, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten.xlsx")
+  write.xlsx(NWO_data_projecten, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_en_hoofdaanvrager.xlsx") # with "Main Applicant" 
+
+
+### PROJECTS: products  
 
 # Save: create excel files with products (research output) with project_id # column
   write.xlsx(NWO_data_output, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput.xlsx")  
-  write.xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
-
+  write.xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")
+    
 ```
 
 
