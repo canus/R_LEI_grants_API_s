@@ -1482,19 +1482,26 @@ border-radius: 0px;
 </div>
 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
+<div id="abstract" class="section level3">
+<h3>Abstract</h3>
 <p>This r notebook can retrieve the grant information from NWO
 (Nederlandse organisatie voor Wetenschappelijk Onderzoek) between 2
-specific dates from an organisation (in this case ‘Universiteit Leiden’)
-using their API. The output will be multiple Excel files based on your
-query.</p>
+specific dates from an organisation (in this example ‘Universiteit
+Leiden’) using their API. The API returns results in JSON format. The
+data schema is available via the “Instruction for use of NWOpen-API” PDF
+on the <a href="https://www.nwo.nl/en/how-to-use-the-nwopen-api">NWO
+website</a>.</p>
+<p>This r notebook output will be multiple Excel files in a sub-folder
+of DATA_GRANTS based on your query.</p>
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
 <p>De Nederlandse organisatie voor Wetenschappelijk Onderzoek (NWO)
 projectendatabank raadplegen via de NWOpen API om de projecten waar LEI
-aan is verbonden uit de selectie die beschikbaar is vanuit de
-projectendatabank (<a href="https://www.nwo.nl/projecten" class="uri">https://www.nwo.nl/projecten</a>). De projectendatabank
-interface gaat terug tot 1993 terug, maar lijkt in het begin onvolledig.
-Informatie over de data selectie via de API staat onder data.</p>
+aan is verbonden uit de selectie die beschikbaar is vanuit de <a href="https://www.nwo.nl/projecten">projectendatabank</a>. De
+projectendatabank interface gaat terug tot 1993 terug, maar lijkt in het
+begin onvolledig. Informatie over de data selectie via de API staat
+onder data.</p>
 <p>ZonMW heeft een separate projectendatabank via: <a href="https://projecten.zonmw.nl/nl" class="uri">https://projecten.zonmw.nl/nl</a></p>
 <p>Voor meer informatie over de API van NWO zie het PDF-bestand
 “NWOpen-API” via: <a href="https://www.nwo.nl/gebruik-nwopen-api" class="uri">https://www.nwo.nl/gebruik-nwopen-api</a></p>
@@ -1504,7 +1511,7 @@ Informatie over de data selectie via de API staat onder data.</p>
 <div id="load-packages" class="section level2">
 <h2>Load packages</h2>
 <pre class="r"><code># Packages needed
-  package.list &lt;- c(&quot;conflicted&quot;, &quot;reprex&quot;, &quot;tidyverse&quot;, &quot;rmarkdown&quot;, 
+  package.list &lt;- c(&quot;conflicted&quot;, &quot;reprex&quot;, &quot;tidyverse&quot;, &quot;rmarkdown&quot;,
                     &quot;httr2&quot;, &quot;data.table&quot;, &quot;jsonlite&quot;, &quot;vctrs&quot;, &quot;openxlsx&quot;)
 
 
@@ -1605,54 +1612,62 @@ zijn verrijkt.</li>
 <div id="api-base-url" class="section level3">
 <h3>API base URL</h3>
 <pre class="r"><code># URL NWOpen-API
-  NWOpen_base_url &lt;-&quot;https://nwopen-api.nwo.nl/NWOpen-API/api/Projects&quot;</code></pre>
+  base_url &lt;-&quot;https://nwopen-api.nwo.nl&quot;</code></pre>
 </div>
 <div id="api-query-iterative" class="section level3">
 <h3>API query: Iterative</h3>
-<pre class="r"><code># Iterative request and responce prossesing
-# the date is given as ISO 8601 extended format YYYY-MM-DD
-NWO_responses &lt;-
-request(NWOpen_base_url) |&gt;
-  req_url_query(
+<pre class="r"><code>### API request and iterative response processing to a data frame (NWO_data_projectendatabank)
+
+# Dates is given as ISO 8601 extended format YYYY-MM-DD
+  NWO_responses &lt;- 
+    request(base_url) |&gt;
+    req_url_path_append (&quot;NWOpen-API/api/Projects&quot;) |&gt;
+    req_url_query(
       rs_start_date = &quot;2020-01-01&quot;,
       re_start_date = &quot;2024-12-31&quot;,
       organisation = &quot;\&quot;Universiteit Leiden\&quot;&quot;,
-#      per_page = 10     # reduce repsone length for testing (in combination with max_reqs)
-    ) |&gt; 
-  req_perform_iterative(
-  next_req = iterate_with_offset(
-    &quot;page&quot;,
-    resp_pages = function(resp) resp_body_json(resp)$meta$pages
-  ),
-    max_reqs = Inf # use for example max_reqs = 3 if you want to limit your maximum requests for testing
-) |&gt;
-resps_successes() |&gt;
-  resps_data(\(resp) resp_body_json(resp)$projects)</code></pre>
-<pre><code>## ⠙ Iterating 1 done (0.18/s) | 5.5sIterating ■■■■■■ 17% | ETA: 29sIterating
-## ■■■■■■■■■■■ 33% | ETA: 27sIterating ■■■■■■■■■■■■■■■■ 50% | ETA: 23sIterating
-## ■■■■■■■■■■■■■■■■■■■■■ 67% | ETA: 16sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% |
-## ETA: 9s</code></pre>
-<pre class="r"><code>#Convert NWO_responses to JSON (JavaScript Object Notation)
-NWO_responses_JSON &lt;- toJSON(NWO_responses)
+#      per_page = 10     # reduces repsone length for testing (in combination with max_reqs)
+      ) |&gt; 
+  
+    req_perform_iterative(
+      next_req = iterate_with_offset(
+        &quot;page&quot;, 
+        resp_pages = function(resp) resp_body_json(resp)$meta$pages
+        ),
+      max_reqs = Inf # use for testing max_reqs = 3 if you want to limit your max requests
+        ) |&gt;
+    resps_successes() |&gt;
+    resps_data(\(resp) resp_body_json(resp)$projects)</code></pre>
+<pre><code>## ⠙ Iterating 1 done (0.17/s) | 5.9sIterating ■■■■■■■■■■■ 33% | ETA: 27sIterating
+## ■■■■■■■■■■■■■■■■ 50% | ETA: 21sIterating ■■■■■■■■■■■■■■■■■■■■■ 67% | ETA:
+## 16sIterating ■■■■■■■■■■■■■■■■■■■■■■■■■■ 83% | ETA: 8s</code></pre>
+<pre class="r"><code># Convert NWO_responses to JSON (JavaScript Object Notation)
+  NWO_responses_JSON &lt;- toJSON(NWO_responses)
 
 
-#Convert NWO_responses from JSON to data frame
+# Convert NWO_responses from JSON to data frame
   NWO_data_projectendatabank &lt;- fromJSON(NWO_responses_JSON)</code></pre>
 </div>
 </div>
 </div>
-<div id="processing-data" class="section level1">
-<h1>Processing Data</h1>
-<div id="projects-members" class="section level2">
-<h2>PROJECTS: members</h2>
-<p>The r code below will create a file with the ‘Hoofdaanvragers’. This
-file contains ‘Main Applicant’ (if that role was not available it
-contains the ‘Project leader’, if both are not available in the data it
-contains ‘Researcher’). A second file will also be produced with all
-members related to the project.</p>
-<pre class="r"><code>## Projectmembers (Personenbestanden)
+<div id="processing-api-response" class="section level1">
+<h1>Processing API response</h1>
+<div id="create-directory" class="section level2">
+<h2>Create directory</h2>
+<pre class="r"><code># Create Folders: creates a DATA_GRANTS directory (if not already present) with a sub-folder
+  ifelse(!dir.exists(&quot;DATA_GRANTS&quot;), dir.create(&quot;DATA_GRANTS&quot;), &quot;Folder exists already&quot;)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_GRANTS&quot;)), &quot;Folder exists already&quot;)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+</div>
+<div id="processing-the-response" class="section level2">
+<h2>Processing the response</h2>
+<p><a id="members"></a></p>
+<div id="projects-members" class="section level3">
+<h3>PROJECTS: members</h3>
+<pre class="r"><code>### Processing api response of project members (Personenbestanden) with project_id #
   
-# Select project_members and project_id
+# Selects project_members and project_id
   NWO_projects_members_all &lt;- 
     select(NWO_data_projectendatabank, 
            project_id,
@@ -1664,39 +1679,33 @@ members related to the project.</p>
   NWO_data_personen &lt;- NWO_projects_members_all %&gt;% unnest(project_members)
 
 
-# Filters NWO_projects_members_all: role = &quot;Main Applicant&quot;
+# Filters NWO_projects_members_all by role
   NWO_members_main.applicant &lt;- subset(NWO_data_personen, role == &quot;Main Applicant&quot;) # ≠ # projects
-  NWO_members_Project.leader &lt;- subset(NWO_data_personen, role == &quot;Project leader&quot;) # still lose 1
-  NWO_members_Researcher &lt;- subset(NWO_data_personen, role == &quot;Researcher&quot;) # solves problem
+  NWO_members_Project.leader &lt;- subset(NWO_data_personen, role == &quot;Project leader&quot;) # still lose 1 project
+  NWO_members_Researcher &lt;- subset(NWO_data_personen, role == &quot;Researcher&quot;) # solves missing projects
 
 
-# Combining previous filters (order matters)
+# Combining previous filters (order matters to get the role = &quot;Main Applicant&quot; for most projects)
   NWO_members_sort &lt;- do.call(&quot;rbind&quot;, list(NWO_members_main.applicant, NWO_members_Project.leader, NWO_members_Researcher))  
 
 
-# Deduplicate filters (zodat uit LEI_output_enkel deel het fdr deel wordt verwijderd):          
+# Deduplicate the combined file          
   NWO_data_personen_hoofdaanvrager &lt;- NWO_members_sort[!duplicated(NWO_members_sort$project_id),]
 
 
 
-# Create DATA_GRANTS directory if not there
-  ifelse(!dir.exists(&quot;DATA_GRANTS&quot;), dir.create(&quot;DATA_GRANTS&quot;), &quot;Folder exists already&quot;)</code></pre>
-<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
-<pre class="r"><code>  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS_MEMBERS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS_MEMBERS&quot;)), &quot;Folder exists already&quot;)</code></pre>
-<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
-<pre class="r"><code># Save: create excel files with the project member
-  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;)
-  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_PROJECTS_MEMBERS/NWO_LEI_projecten_personen.xlsx&quot;)</code></pre>
+# Save: create excel files with the project member (with project_id # column)
+  write.xlsx(NWO_data_personen_hoofdaanvrager,  &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen_hoofdaanvragers.xlsx&quot;) # with only &quot;Main Applicant&quot;
+  write.xlsx(NWO_data_personen, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_personen.xlsx&quot;) # with all project_members</code></pre>
+<p><a id="projects"></a></p>
 </div>
-<div id="projects-projects-grants" class="section level2">
-<h2>PROJECTS: projects (grants)</h2>
-<p>The r code below will create a file with the project information and
-the ‘hoofdaanvrager’.</p>
-<pre class="r"><code>## Projectenbestand
+<div id="projects-projects-grants" class="section level3">
+<h3>PROJECTS: projects (grants)</h3>
+<pre class="r"><code>### Processing api response of projects (Projectenbestand)
 
-# Select Project information
+# Selects projects information
   NWO_projecten &lt;- select(NWO_data_projectendatabank,
-                          project_id, # is not = grant id
+                          project_id, # ≠ grant id
                           title,
                           funding_scheme_id,
                           funding_scheme,
@@ -1706,29 +1715,25 @@ the ‘hoofdaanvrager’.</p>
                           end_date,
                           summary_nl,
                           summary_en,
-                          grant_id, # as of ± september 2024 (if the test falls outside the scope the data will not contain this column)
+                          grant_id, # DOI as of ± September 2024 (if the test fails dates are outside the implementation range) ≠ project_id
                           )
 
 
-# Conjoining &quot;NWO_projecten&quot; and &quot;NWO_data_personen_hoofdaanvrager&quot; by project_id
+# Combining &quot;NWO_projecten&quot; and &quot;NWO_data_personen_hoofdaanvrager&quot; by project_id
   NWO_data_projecten &lt;- left_join(NWO_projecten, NWO_data_personen_hoofdaanvrager, by = &quot;project_id&quot;)
 
 
 
-# Create DATA_GRANTS directory if not there
-  ifelse(!dir.exists(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS&quot;)), dir.create(file.path(&quot;DATA_GRANTS&quot;, &quot;NWO_PROJECTS&quot;)), &quot;Folder exists already&quot;)</code></pre>
-<pre><code>## [1] &quot;Folder exists already&quot;</code></pre>
-<pre class="r"><code># Save: create projects file
-  write.xlsx(NWO_data_projecten, &quot;DATA_GRANTS/NWO_PROJECTS/NWO_LEI_projecten.xlsx&quot;)</code></pre>
+# Save: create excel files with projects (grants)
+  write.xlsx(NWO_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten.xlsx&quot;)
+  write.xlsx(NWO_data_projecten, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_projecten_en_hoofdaanvrager.xlsx&quot;) # with &quot;Main Applicant&quot;</code></pre>
+<p><a id="products"></a></p>
 </div>
-<div id="projects-products" class="section level2">
-<h2>PROJECTS: products</h2>
-<p>The r code below will create a file with the resarch output
-(products)and the research output with all authors in the same folder as
-the project information.</p>
-<pre class="r"><code>## onderzoeksoutput
+<div id="projects-products" class="section level3">
+<h3>PROJECTS: products</h3>
+<pre class="r"><code>### Processing api response of products (onderzoeksoutput) and project_id
 
-# Select project_members and project_id
+# Select products and project_id
   NWO_projects_products &lt;- 
     select(NWO_data_projectendatabank, 
            project_id,
@@ -1772,11 +1777,51 @@ the project information.</p>
                           )
 
 
+# List as character (see Notes below)
+#  NWO_data_onderzoeksoutput  &lt;- NWO_data_onderzoeksoutput |&gt; mutate(across(where(is.list),as.character))
+#  NWO_data_output  &lt;- NWO_data_output |&gt; mutate(across(where(is.list),as.character))
+
   
-# Save: create output (product) files
-  write.xlsx(NWO_data_output, &quot;DATA_GRANTS/NWO_PROJECTS/NWO_LEI_onderzoeksoutput.xlsx&quot;)  
-  write.xlsx(NWO_data_onderzoeksoutput, &quot;DATA_GRANTS/NWO_PROJECTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx&quot;)  </code></pre>
+
+# Save: create excel files with products (research output) with project_id # column
+  write.xlsx(NWO_data_output, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput.xlsx&quot;)  
+  write.xlsx(NWO_data_onderzoeksoutput, &quot;DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx&quot;)  </code></pre>
 </div>
+</div>
+</div>
+<div id="notes" class="section level1">
+<h1>Notes</h1>
+<p>The data for the response to your query is stored in
+NWO_data_projectendatabank. You do not need to run all code from
+“Processing the different elements” onwards. Points of failure during
+the processing of the response could be the following:</p>
+<ul>
+<li><a href="#projects">PROJECTS: projects (grants)</a>
+<ul>
+<li>If the end date of your query is ± before September 2024 it doesn’t
+contain the grant_id and this element will fail.</li>
+</ul></li>
+<li><a href="#products">PROJECTS: products</a>
+<ul>
+<li>If your query is small and near the actual time you are running this
+query, there will be no research output and this chunk will fail.</li>
+<li>Depending on the scope of the query the data will have no authors
+with a DAI (Digital Author Identifier)</li>
+<li>When exporting data frame to openxlsx: Error in x[is.na(x)] &lt;-
+na.string : replacement has length zero occurs use the provides “List as
+character” solution to still export the data.frame (occurs when no dates
+are used).</li>
+</ul></li>
+</ul>
+<p>Also note:</p>
+<ul>
+<li><a href="#members">PROJECTS: members</a>
+<ul>
+<li>The data in the organisation column is not always clear (the data is
+identical to the data the main grant applicant wrote on the application
+form).</li>
+</ul></li>
+</ul>
 </div>
 
 
