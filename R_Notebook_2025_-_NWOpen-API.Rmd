@@ -15,13 +15,14 @@ This r notebook can retrieve the grant information from NWO (Nederlandse organis
 This r notebook output will be multiple Excel files in a sub-folder of DATA_GRANTS based on your query.
 
 
+=======
 
 
 # Introduction
 
 De Nederlandse organisatie voor Wetenschappelijk Onderzoek (NWO) projectendatabank raadplegen via de NWOpen API om de projecten waar LEI aan is verbonden uit de selectie die beschikbaar is vanuit de [projectendatabank](https://www.nwo.nl/projecten). De projectendatabank interface gaat terug tot 1993 terug, maar lijkt in het begin onvolledig. Informatie over de data selectie via de API staat onder data.
 
-ZonMW heeft een separate projectendatabank via: https://projecten.zonmw.nl/nl
+ZonMW heeft een separate projectendatabank via: https://projecten.zonmw.nl/nl (maar de data is wel aanwezig in de data).
 
 Voor meer informatie over de API van NWO zie het PDF-bestand "NWOpen-API" via: https://www.nwo.nl/gebruik-nwopen-api
 
@@ -70,7 +71,7 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
 
 ### API base URL
 
-```{r, API URL, echo = TRUE, eval = TRUE}
+```{r setup, API URL, echo = TRUE, eval = TRUE}
 
 # URL NWOpen-API
   base_url <-"https://nwopen-api.nwo.nl"
@@ -273,7 +274,9 @@ De data is afkomstig uit ISAAC, het administratiesysteem van NWO. De informatie 
   write.xlsx(NWO_data_output, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput.xlsx")  
   write.xlsx(NWO_data_onderzoeksoutput, "DATA_GRANTS/NWO_GRANTS/NWO_LEI_onderzoeksoutput_met_auteurs.xlsx")  
 
+
 ```
+
 
 
 
@@ -293,6 +296,5 @@ Also note:
 
 * [PROJECTS: members](#members)
   + The data in the organisation  column is not always clear (the data is identical to the data the main grant applicant wrote on the application form).
-
 
 
